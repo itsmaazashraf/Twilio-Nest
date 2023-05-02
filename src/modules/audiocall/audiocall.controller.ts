@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { AudiocallService } from './audiocall.service';
 import { AudioCallDto } from './dtos/audiocall.dto';
 
@@ -24,6 +24,11 @@ export class AudiocallController {
   @Post('/status')
   status(@Body() callRecord: AudioCallDto) {
     return this.audiocallService.logCall(callRecord);
+  }
+
+  @Get('/logs')
+  logs(@Param('recordsPerPage') recordsPerPage: number, @Param('page') page: number) {
+    return this.audiocallService.callLogs(recordsPerPage, page);
   }
 }
 

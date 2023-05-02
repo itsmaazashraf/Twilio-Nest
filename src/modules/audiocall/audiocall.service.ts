@@ -19,7 +19,7 @@ export class AudiocallService {
     private audiocallModel: Model<AudioCallDocument>,
   ) {}
 
-  handleConnect() : VoiceResponse {
+  handleConnect(): VoiceResponse {
     const response = new Twilio.twiml.VoiceResponse();
     const inputRequest = response.gather({
       numDigits: 1,
@@ -82,26 +82,29 @@ export class AudiocallService {
     }
   }
 
-  handleEndCallRequest () : VoiceResponse {
+  handleEndCallRequest(): VoiceResponse {
     const response = new Twilio.twiml.VoiceResponse();
     response.say(voicePrompts.GOODBYE);
     response.hangup();
-  
-    return response.toString();
-  };
 
-  logCall (callRecord: AudioCallDto) : Promise<AudioCall> {
+    return response.toString();
+  }
+
+  logCall(callRecord: AudioCallDto): Promise<AudioCall> {
     return this.audiocallModel.create({
       sid: callRecord.CallSid,
       callDuration: callRecord.CallDuration,
       callStatus: callRecord.CallStatus,
       from: callRecord.From,
-      audioFileLink: callRecord.RecordingUrl
+      audioFileLink: callRecord.RecordingUrl,
     });
-  };
+  }
 
-  async logs () : Promise<AudioCall[]> { 
-    return this.audiocallModel.find();;
-  };
-
+  async callLogs(recordsPerPage: number, page: number = 1): Promise<AudioCall[]> {
+    const records = recordsPerPage || +process.env.RECORDS_PER_PAGE;
+    return this.audiocallModel
+      .find()
+      .skip(records * page)
+      .limit(records);
+  }
 }
