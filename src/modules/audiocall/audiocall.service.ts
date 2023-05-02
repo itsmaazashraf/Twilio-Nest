@@ -8,9 +8,9 @@ import { AudioCall, AudioCallDocument } from './audiocall.model';
 import { voicePrompts } from './constants/twilio';
 import { AudioCallDto } from './dtos/audiocall.dto';
 
-const CONNECT_URL = '/api/v1/audioCall/connect';
-const END_URL = '/api/v1/audioCall/end';
-const INPUT_URL = '/api/v1/audioCall/input';
+const CONNECT_URL = '/audioCall/connect';
+const END_URL = '/audioCall/end';
+const INPUT_URL = '/audioCall/input';
 
 @Injectable()
 export class AudiocallService {
@@ -19,7 +19,7 @@ export class AudiocallService {
     private audiocallModel: Model<AudioCallDocument>,
   ) {}
 
-  handleConnect() : VoiceResponse {
+  handleConnect(): string {
     const response = new Twilio.twiml.VoiceResponse();
     const inputRequest = response.gather({
       numDigits: 1,
@@ -82,26 +82,29 @@ export class AudiocallService {
     }
   }
 
-  handleEndCallRequest () : VoiceResponse {
+  handleEndCallRequest(): string {
     const response = new Twilio.twiml.VoiceResponse();
     response.say(voicePrompts.GOODBYE);
     response.hangup();
-  
-    return response.toString();
-  };
 
-  logCall (callRecord: AudioCallDto) : Promise<AudioCall> {
+    return response.toString();
+  }
+
+  logCall(callRecord: AudioCallDto): Promise<AudioCall> {
     return this.audiocallModel.create({
       sid: callRecord.CallSid,
       callDuration: callRecord.CallDuration,
       callStatus: callRecord.CallStatus,
       from: callRecord.From,
-      audioFileLink: callRecord.RecordingUrl
+      audioFileLink: callRecord.RecordingUrl,
     });
-  };
+  }
 
-  async logs () : Promise<AudioCall[]> { 
-    return this.audiocallModel.find();;
-  };
-
+  async callLogs({recordsPerPage, page}): Promise<AudioCallDocument[]> {
+    const records = recordsPerPage || +process.env.RECORDS_PER_PAGE;
+    return this.audiocallModel
+      .find()
+      .skip(records * page)
+      .limit(records);
+  }
 }
